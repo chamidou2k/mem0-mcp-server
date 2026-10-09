@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  mem0-mcp:
+    build: .
+    ports:
+      - "8050:8050"
+    environment:
+      - MEM0_HOST=http://mem0:8001
+      - MEM0_USER_ID=<user_id>
+      - MEM0_AGENT_ID=<agent_id>
+    depends_on:
+      - mem0
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  mem0:
+    image: mem0ai/mem0:latest
+    ports:
+      - "8001:8001"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

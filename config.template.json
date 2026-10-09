@@ -1,0 +1,10 @@
+{
+  "mem0_host": "http://<mem0-host>:<port>",
+  "api_key": "<api_key>",
+  "user_id": "<user_id>",
+  "agent_id": "<agent_id>",
+  "channel": "<channel>",
+  "search_threshold": 0.1,
+  "max_memories": 50,
+  "infer": true
+}
