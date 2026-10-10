@@ -93,7 +93,10 @@ specifier and without a build step. The repository SHALL contain a root
 step succeeds. The adapter package SHALL NOT declare `devDependencies` and SHALL
 NOT declare `scripts`, so preparation resolves no adapter dependencies and runs
 no lifecycle build. The compiled entry point referenced by the adapter package's
-`main`/`exports` fields SHALL be committed to the repository.
+`main`/`exports` fields SHALL be committed to the repository and SHALL be
+self-contained: it SHALL NOT import any package specifier at runtime, so it loads
+from wherever the installer places it even though OpenCode's own packages are not
+resolvable there.
 
 #### Scenario: Git install needs no build
 - **WHEN** the adapter package is resolved from the Git repository
@@ -110,3 +113,9 @@ no lifecycle build. The compiled entry point referenced by the adapter package's
 - **THEN** the adapter package declares no `devDependencies` and no `scripts`, so
   preparation neither installs adapter dependencies nor runs a build script, and
   the preparation succeeds
+
+#### Scenario: Loaded from the Git install
+- **WHEN** OpenCode loads the adapter entry point from its install cache
+- **THEN** the entry point resolves no external package, its default export
+  exposes an `id` and a `setup`, and loading registers the `mem0` server without
+  a module-resolution error
