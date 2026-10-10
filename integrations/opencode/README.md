@@ -55,7 +55,7 @@ reads the `plugins` array; pass the options through the object form:
 {
   "plugins": [
     {
-      "package": "opencode-mem0-mcp",
+      "package": "github:chamidou2k/mem0-mcp-server#main::path:integrations/opencode",
       "options": {
         "mem0Host": "http://192.168.1.100:8001",
         "mem0HostHttps": "https://192.168.1.100:8443",
@@ -147,7 +147,12 @@ to disk.
 
 ## Development
 
+The adapter ships prebuilt, so installing from Git needs no build. Maintainers
+build from the repository root (the build tooling lives in the root manifest):
+
 ```bash
 npm install
-npm run build
+npx tsc -p integrations/opencode
 ```
+
+Commit the regenerated `dist/` whenever `src/` changes.
