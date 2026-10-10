@@ -22,6 +22,11 @@ from typing import Optional
 import httpx
 from mcp.server.mcpserver import MCPServer
 
+# Version of this server. Single source of truth: exposed through the MCP server
+# metadata, the mem0_get_status tool, and the --version CLI option, and read by
+# pyproject.toml to set the installed package version.
+__version__ = "1.1.0"
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -365,7 +370,7 @@ def load_config(config_path: Optional[str] = None) -> dict:
 
 async def create_mcp_server(config: dict) -> MCPServer:
     """Create and configure the MCP server with all tool handlers."""
-    mcp = MCPServer(name="mem0-mcp", version="1.0.0")
+    mcp = MCPServer(name="mem0-mcp", version=__version__)
 
     mem0_client = Mem0Client(
         host=config.get("mem0_host"),
@@ -508,12 +513,19 @@ async def create_mcp_server(config: dict) -> MCPServer:
         try:
             result = await mem0_client.get_status()
             return json.dumps(
-                {"status": "success", "message": "Mem0 server is healthy", "data": result},
+                {
+                    "status": "success",
+                    "message": "Mem0 server is healthy",
+                    "server_version": __version__,
+                    "data": result,
+                },
                 indent=2,
             )
         except Exception as e:
             logger.error(f"Error checking status: {e}")
-            return json.dumps({"status": "error", "message": str(e)})
+            return json.dumps(
+                {"status": "error", "message": str(e), "server_version": __version__}
+            )
 
     return mcp
 
@@ -523,6 +535,11 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Mem0 MCP Server")
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+    )
     parser.add_argument("--config", type=str, help="Path to configuration file (JSON)", default=None)
     parser.add_argument("--host", type=str, help="Host to bind to (default: 0.0.0.0)", default=None)
     parser.add_argument("--port", type=int, help="Port to listen on (default: 8050)", default=None)

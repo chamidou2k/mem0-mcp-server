@@ -95,6 +95,22 @@ python mem0_mcp_server.py --config config.json
 python mem0_mcp_server.py --config config.json --transport sse --port 8050
 ```
 
+## Checking the version
+
+The running server reports a single version through every surface (currently
+`1.1.0`):
+
+- **CLI:** `mem0-mcp-server --version` (or `python mem0_mcp_server.py --version`)
+  prints the version and exits `0` without loading configuration or contacting
+  the hub.
+- **Status tool:** the `mem0_get_status` tool includes `server_version` in its
+  JSON result (on both success and error), so a connected client can confirm
+  which build is running.
+
+All surfaces report the same value, which also matches the installed
+`mem0-mcp-server` package version. After upgrading, reinstall the package
+(`pip install .`) so the installed version and the CLI agree.
+
 ## Docker
 
 ```bash
