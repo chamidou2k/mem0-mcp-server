@@ -104,6 +104,28 @@ environment variable and, when that is also unset, to the server's own default.
 | `infer` | `MEM0_INFER` | Enable semantic fact extraction |
 | `serverCommand` | *(none)* | Override the server launch command (a string or an array of strings); defaults to `uvx --from git+https://github.com/chamidou2k/mem0-mcp-server mem0-mcp-server` |
 
+## Startup latency
+
+When OpenCode connects MCP servers for several workspace directories at once, it
+starts one server process per directory. The first `uvx` run must resolve and
+build the server environment, and concurrent runs serialize on uv's cache lock.
+On a cold cache some connections can therefore exceed OpenCode's MCP connect
+timeout (~30s) and show `mem0` as pending or failed.
+
+Install the server once as a uv tool and point `serverCommand` at the resulting
+binary to make every start fast and lock-free:
+
+```bash
+uv tool install --from git+https://github.com/chamidou2k/mem0-mcp-server mem0-mcp-server
+```
+
+```json
+{ "serverCommand": ["/home/you/.local/bin/mem0-mcp-server"] }
+```
+
+With a warm cache the `uvx` default also starts in about two seconds, so this
+tuning is only needed for multi-directory setups or slow networks.
+
 ## How it works
 
 The default export supports both plugin APIs and imports nothing at runtime, so

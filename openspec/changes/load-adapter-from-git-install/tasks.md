@@ -14,8 +14,9 @@
 
 ## 3. Verify the end-to-end Git install
 
-- [ ] 3.1 Commit and push, then reinstall from `github:chamidou2k/mem0-mcp-server#main::path:integrations/opencode` with OpenCode and npm caches cleared, and confirm OpenCode's log shows the plugin loading (no `Cannot find package` warning) and `mem0` connected.
-- [ ] 3.2 Remove the local wrapper `~/.config/opencode/plugins/opencode-mem0-mcp.js` so `mem0` is served only by the Git-installed plugin, restart the service, and confirm `mem0` remains connected.
+- [x] 3.1 Commit and push, then reinstall from `github:chamidou2k/mem0-mcp-server#main::path:integrations/opencode` with OpenCode and npm caches cleared, and confirm OpenCode's log shows the plugin loading (no `Cannot find package` warning) and `mem0` connected.
+- [x] 3.2 Remove the local wrapper `~/.config/opencode/plugins/opencode-mem0-mcp.js` so `mem0` is served only by the Git-installed plugin, restart the service, and confirm `mem0` remains connected.
+- [x] 3.3 Document the `uvx` cold-start/concurrency caveat and the `uv tool install` + `serverCommand` remedy in `integrations/opencode/README.md`.
 
 ## Workflow follow-up
 
