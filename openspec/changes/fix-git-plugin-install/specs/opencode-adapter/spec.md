@@ -7,8 +7,10 @@
 The adapter SHALL be installable from the project's Git repository with a single
 specifier and without a build step. The repository SHALL contain a root
 `package.json`, marked `private`, so the installer's Git dependency preparation
-step succeeds, and the compiled entry point referenced by the adapter package's
-`main`/`exports` fields SHALL be committed to the repository.
+step succeeds, and the adapter package SHALL NOT declare `devDependencies`, so
+preparation resolves no adapter dependencies. The compiled entry point
+referenced by the adapter package's `main`/`exports` fields SHALL be committed to
+the repository.
 
 #### Scenario: Git install needs no build
 - **WHEN** the adapter package is resolved from the Git repository
@@ -19,3 +21,8 @@ step succeeds, and the compiled entry point referenced by the adapter package's
 - **WHEN** the installer prepares the repository as a Git dependency
 - **THEN** it finds a root `package.json` and can then select the adapter package
   from `integrations/opencode`
+
+#### Scenario: Preparation resolves no adapter dependencies
+- **WHEN** the installer prepares the adapter package as a Git dependency
+- **THEN** it does not install `devDependencies` for the adapter package and the
+  preparation succeeds
