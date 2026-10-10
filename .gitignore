@@ -7,6 +7,9 @@ __pycache__/
 dist/
 build/
 
+# Node
+node_modules/
+
 # Config
 config.json
 .env

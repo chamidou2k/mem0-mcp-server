@@ -14,13 +14,27 @@ A local MCP (Model Context Protocol) server that bridges to a remote mem0 REST A
 
 ## Quick Start
 
-### 1. Install dependencies
+### 1. Install
+
+Install the server as a Python package, which provides the `mem0-mcp-server` command:
+
+```bash
+pip install .
+```
+
+Or run it without installing, straight from the source repository:
+
+```bash
+uvx --from git+https://github.com/chamidou2k/mem0-mcp-server mem0-mcp-server
+```
+
+For a plain source checkout without packaging, install the runtime dependencies directly:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Or use the provided start script which creates a virtual environment automatically:
+Or use the provided start script, which creates a virtual environment, installs the dependencies, and launches the server:
 
 ```bash
 chmod +x start.sh
@@ -40,6 +54,9 @@ Edit `config.json` with your mem0 server details:
 ```json
 {
   "mem0_host": "http://<mem0-host>:<port>",
+  "mem0_host_https": "https://<mem0-host>:<https-port>",
+  "cert_path": "/path/to/ca-certificate.pem",
+  "tls_verify_hostname": true,
   "api_key": "<api_key>",
   "user_id": "<user_id>",
   "agent_id": "<agent_id>",
@@ -50,7 +67,20 @@ Edit `config.json` with your mem0 server details:
 }
 ```
 
-Or use environment variables (`MEM0_HOST`, `MEM0_USER_ID`, `MEM0_AGENT_ID`, `MEM0_API_KEY`, `MEM0_CHANNEL`, `MEM0_SEARCH_THRESHOLD`, `MEM0_MAX_MEMORIES`, `MEM0_INFER`).
+The endpoint you configure determines how the server connects:
+
+- **HTTP only** (`mem0_host` set, `mem0_host_https` empty): operations go to HTTP directly.
+- **HTTPS only** (`mem0_host` empty, `mem0_host_https` set): operations go to HTTPS directly; `cert_path` is required.
+- **Both** (both set): the server checks HTTP availability before each operation and uses HTTPS only when HTTP is unavailable — HTTP is preferred and re-checked every operation, so traffic returns to HTTP as soon as it recovers.
+- **Neither** (both empty): the server still starts, but each operation fails with an error until you set `mem0_host` or `mem0_host_https`.
+
+An empty or null value means "not configured". `mem0_host` has no built-in default, so set `mem0_host`, `mem0_host_https`, or both.
+
+**HTTPS certificate verification:** by default the hub's certificate is verified against `cert_path`, including a match of the host/IP you connect to. If the hub uses a self-signed certificate whose name does not match its address (for example `CN=localhost` while connecting to `192.168.1.100`), set `"tls_verify_hostname": false` to keep verifying the certificate chain against `cert_path` while skipping only the hostname/IP match — chain verification is never disabled. This weakens protection against a mismatched or spoofed certificate, so the safer alternative is to add the hub's IP/hostname as a SAN to its certificate and leave the option at `true`.
+
+**API key:** when `api_key` is configured (a non-empty value other than `none`), the server sends it as an `X-API-Key` header on every hub request, for both the HTTP and HTTPS endpoints. `none` or an empty value sends no key header, which keeps hubs that do not require authentication working. Because the key is sent in cleartext over plain HTTP, use the HTTPS endpoint when the hub requires a key.
+
+Or use environment variables (`MEM0_HOST`, `MEM0_HOST_HTTPS`, `MEM0_CERT_PATH`, `MEM0_TLS_VERIFY_HOSTNAME`, `MEM0_USER_ID`, `MEM0_AGENT_ID`, `MEM0_API_KEY`, `MEM0_CHANNEL`, `MEM0_SEARCH_THRESHOLD`, `MEM0_MAX_MEMORIES`, `MEM0_INFER`). Every option can be set from the environment; an environment variable takes precedence over the same key in the configuration file, and an unset variable leaves the file value (or the default) in place. `MEM0_TLS_VERIFY_HOSTNAME` accepts `true`/`false` (case-insensitive).
 
 ### 3. Run
 
@@ -82,8 +112,11 @@ docker-compose down
 
 | Config Key | Env Variable | Default | Description |
 |---|---|---|---|
-| `mem0_host` | `MEM0_HOST` | `http://<mem0-host>:<port>` | Mem0 platform URL |
-| `api_key` | `MEM0_API_KEY` | `none` | API key (use "none" if not required) |
+| `mem0_host` | `MEM0_HOST` | *(unset)* | Mem0 platform HTTP URL (preferred endpoint when set) |
+| `mem0_host_https` | `MEM0_HOST_HTTPS` | *(unset)* | Optional HTTPS hub URL, used as fallback when HTTP is unavailable |
+| `cert_path` | `MEM0_CERT_PATH` | *(unset)* | CA certificate/bundle verifying the HTTPS hub; required when `mem0_host_https` is set |
+| `tls_verify_hostname` | `MEM0_TLS_VERIFY_HOSTNAME` | `true` | Verify the HTTPS hub cert's hostname/IP; set `false` to skip the hostname match while still verifying the chain against `cert_path` |
+| `api_key` | `MEM0_API_KEY` | `none` | API key sent as the `X-API-Key` header; `none`/empty sends no key (use HTTPS when a key is required) |
 | `user_id` | `MEM0_USER_ID` | `user` | Mem0 user identifier |
 | `agent_id` | `MEM0_AGENT_ID` | `agent` | Mem0 agent identifier |
 | `channel` | `MEM0_CHANNEL` | `` | Channel/source identifier |
@@ -91,15 +124,9 @@ docker-compose down
 | `max_memories` | `MEM0_MAX_MEMORIES` | `50` | Max results for list/search |
 | `infer` | `MEM0_INFER` | `true` | Enable semantic fact extraction |
 
-## OpenCode Plugin Installation
+## Client Integrations
 
-For one-line installation in OpenCode:
-
-```bash
-opencode plugin add opencode-mem0-mcp
-```
-
-The plugin automatically registers the mem0 MCP server with your OpenCode configuration.
+Integrations that register this server with specific MCP clients live under `integrations/`.
 
 ## License
 

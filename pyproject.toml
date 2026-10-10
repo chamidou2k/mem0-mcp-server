@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mem0-mcp-server"
+version = "1.0.0"
+description = "Local MCP server bridging to a remote mem0 REST API"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "mcp>=0.3.0",
+    "httpx>=0.25.0",
+]
+
+[project.scripts]
+mem0-mcp-server = "mem0_mcp_server:main"
+
+[tool.setuptools]
+py-modules = ["mem0_mcp_server"]

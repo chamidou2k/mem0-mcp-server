@@ -15,6 +15,7 @@ import asyncio
 import json
 import logging
 import os
+import ssl
 import sys
 from typing import Optional
 
@@ -30,7 +31,20 @@ logger = logging.getLogger("mem0-mcp")
 
 # Default configuration
 DEFAULT_CONFIG = {
-    "mem0_host": "http://192.168.1.100:8001",
+    # No built-in endpoint: empty/None means "not configured". Set `mem0_host`
+    # (HTTP) and/or `mem0_host_https` (HTTPS) to enable hub access.
+    "mem0_host": "",
+    # Optional HTTPS endpoint for the hub. When set, the server prefers the HTTP
+    # endpoint and falls back to this one when HTTP is unavailable. Requires
+    # cert_path (a CA certificate/bundle used to verify the hub's TLS cert).
+    "mem0_host_https": None,
+    "cert_path": None,
+    # When true (default), the hub's TLS certificate is verified against
+    # cert_path including a hostname/IP match. Set to false to keep chain
+    # verification against cert_path but skip the hostname/IP match (useful for
+    # self-signed hub certificates without a matching SAN). Configuration-file
+    # only; never disables TLS verification entirely.
+    "tls_verify_hostname": True,
     "api_key": "none",
     "user_id": "ssc",
     "agent_id": "opencode",
@@ -41,12 +55,51 @@ DEFAULT_CONFIG = {
 }
 
 
+def _normalize_base_url(value: str, default_scheme: str) -> str:
+    """Return a hub base URL with a scheme, defaulting when none is given.
+
+    A value that already contains a scheme is preserved; a scheme-less value
+    such as ``host:port`` gets ``default_scheme`` prepended. Trailing slashes
+    are stripped to match the existing ``mem0_host`` handling.
+    """
+    value = str(value).strip()
+    if "://" not in value:
+        value = f"{default_scheme}://{value}"
+    return value.rstrip("/")
+
+
+def _is_configured(value) -> bool:
+    """Return True when an endpoint option holds a usable, non-blank value.
+
+    ``None``, ``""`` and whitespace-only values all mean "not configured", so
+    an operator can switch an endpoint off without removing the key.
+    """
+    return value is not None and str(value).strip() != ""
+
+
+def _parse_bool_option(value, default: bool) -> bool:
+    """Parse a boolean config option.
+
+    Accepts a JSON boolean and the strings ``"true"``/``"false"`` (case-
+    insensitive). Any other value (including ``None``/absent) yields ``default``.
+    """
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        text = value.strip().lower()
+        if text == "true":
+            return True
+        if text == "false":
+            return False
+    return default
+
+
 class Mem0Client:
     """Client for interacting with remote mem0 REST API."""
 
     def __init__(
         self,
-        host: str,
+        host: Optional[str] = None,
         api_key: str = "none",
         user_id: str = "ssc",
         agent_id: str = "opencode",
@@ -54,8 +107,14 @@ class Mem0Client:
         search_threshold: float = 0.1,
         max_memories: int = 50,
         infer: bool = False,
+        https_host: Optional[str] = None,
+        cert_path: Optional[str] = None,
+        tls_verify_hostname: bool = True,
     ):
-        self.host = host.rstrip("/")
+        self.host = host.rstrip("/") if host else None
+        self.https_host = https_host.rstrip("/") if https_host else None
+        self.cert_path = cert_path
+        self.tls_verify_hostname = tls_verify_hostname
         self.api_key = api_key
         self.user_id = user_id
         self.agent_id = agent_id
@@ -67,14 +126,72 @@ class Mem0Client:
         headers: dict = {}
         if api_key != "none":
             headers["Content-Type"] = "application/json"
+        # Send the configured API key the way the hub expects it. An unset
+        # (empty) or literal "none" key sends no header, preserving compatibility
+        # with hubs that do not require authentication.
+        if api_key and api_key != "none":
+            headers["X-API-Key"] = api_key
         if channel:
             headers["X-Mem0-Source"] = channel
         headers["X-Mem0-Client"] = "mem0-mcp"
-        self.client = httpx.AsyncClient(
-            base_url=self.host,
-            timeout=30.0,
-            headers=headers,
-        )
+        self.headers = headers
+
+        # Preferred HTTP endpoint (no TLS kwargs); built only when configured.
+        self.client: Optional[httpx.AsyncClient] = None
+        if self.host:
+            self.client = httpx.AsyncClient(
+                base_url=self.host,
+                timeout=30.0,
+                headers=headers,
+            )
+        # Optional HTTPS endpoint, verified against the configured CA; built
+        # only when configured. Either client may be None.
+        self.https_client: Optional[httpx.AsyncClient] = None
+        if self.https_host:
+            verify = self.cert_path
+            if not self.tls_verify_hostname:
+                # Verify the certificate chain against the configured CA but
+                # skip the hostname/IP match. TLS verification stays mandatory.
+                verify = ssl.create_default_context(cafile=self.cert_path)
+                verify.check_hostname = False
+            self.https_client = httpx.AsyncClient(
+                base_url=self.https_host,
+                timeout=30.0,
+                headers=headers,
+                verify=verify,
+            )
+
+    async def _select_client(self) -> httpx.AsyncClient:
+        """Return the client for the next hub operation.
+
+        Selection matrix:
+        - neither endpoint configured -> raise a clear error per operation
+          (startup still succeeds);
+        - HTTPS only -> the HTTPS client, with no HTTP probe;
+        - HTTP only -> the HTTP client, with no probe;
+        - both -> HTTP is preferred: probe HTTP per operation and use it when it
+          responds, otherwise fall back to the HTTPS client.
+        """
+        if self.client is None and self.https_client is None:
+            raise RuntimeError(
+                "no mem0 endpoint configured; set mem0_host or mem0_host_https"
+            )
+        if self.https_client is None:
+            return self.client
+        if self.client is None:
+            return self.https_client
+        try:
+            response = await self.client.get("/health")
+            response.raise_for_status()
+            return self.client
+        except Exception as e:
+            logger.warning(
+                "HTTP endpoint %s unavailable (%s); falling back to HTTPS endpoint %s",
+                self.host,
+                e,
+                self.https_host,
+            )
+            return self.https_client
 
     async def add_memory(self, content: str, metadata: Optional[dict] = None) -> dict:
         """Add a memory to mem0.
@@ -93,7 +210,8 @@ class Mem0Client:
         if self.agent_id:
             payload["agent_id"] = self.agent_id
 
-        response = await self.client.post("/memories", json=payload)
+        client = await self._select_client()
+        response = await client.post("/memories", json=payload)
         response.raise_for_status()
         return response.json()
 
@@ -106,7 +224,8 @@ class Mem0Client:
         if self.agent_id:
             payload["agent_id"] = self.agent_id
 
-        response = await self.client.post("/search", json=payload)
+        client = await self._select_client()
+        response = await client.post("/search", json=payload)
         response.raise_for_status()
         return response.json()
 
@@ -117,13 +236,15 @@ class Mem0Client:
             params["agent_id"] = self.agent_id
         params["top_k"] = min(page_size, self.max_memories)
 
-        response = await self.client.get("/memories", params=params)
+        client = await self._select_client()
+        response = await client.get("/memories", params=params)
         response.raise_for_status()
         return response.json()
 
     async def get_memory(self, memory_id: str) -> dict:
         """Get a specific memory by ID."""
-        response = await self.client.get(
+        client = await self._select_client()
+        response = await client.get(
             "/memories",
             params={
                 "user_id": self.user_id,
@@ -140,7 +261,8 @@ class Mem0Client:
 
     async def delete_memory(self, memory_id: str) -> dict:
         """Delete a memory by ID."""
-        response = await self.client.delete(f"/memories/{memory_id}")
+        client = await self._select_client()
+        response = await client.delete(f"/memories/{memory_id}")
         response.raise_for_status()
         return response.json()
 
@@ -151,19 +273,30 @@ class Mem0Client:
         payload = {"text": content}
         if metadata:
             payload["metadata"] = metadata
-        response = await self.client.put(f"/memories/{memory_id}", json=payload)
+        client = await self._select_client()
+        response = await client.put(f"/memories/{memory_id}", json=payload)
         response.raise_for_status()
         return response.json()
 
     async def get_status(self) -> dict:
-        """Get mem0 server status."""
-        response = await self.client.get("/health")
+        """Get mem0 server status from the active endpoint."""
+        client = await self._select_client()
+        response = await client.get("/health")
         response.raise_for_status()
         return response.json()
 
 
 def load_config(config_path: Optional[str] = None) -> dict:
-    """Load configuration from file or environment variables."""
+    """Load configuration from file or environment variables.
+
+    Endpoints are optional and treated as configured only when non-blank:
+    ``None``, empty, and whitespace-only values all mean "not configured".
+    ``mem0_host`` (HTTP) and ``mem0_host_https`` (HTTPS) are normalized here;
+    when the HTTPS endpoint is configured, ``cert_path`` is required and
+    validated so failures surface at startup. These endpoint options are
+    configuration-file only and have no environment-variable mappings (unlike
+    ``mem0_host``).
+    """
     config = DEFAULT_CONFIG.copy()
 
     # Load from config file if provided
@@ -174,6 +307,9 @@ def load_config(config_path: Optional[str] = None) -> dict:
     # Override with environment variables
     env_mappings = {
         "MEM0_HOST": "mem0_host",
+        "MEM0_HOST_HTTPS": "mem0_host_https",
+        "MEM0_CERT_PATH": "cert_path",
+        "MEM0_TLS_VERIFY_HOSTNAME": "tls_verify_hostname",
         "MEM0_API_KEY": "api_key",
         "MEM0_USER_ID": "user_id",
         "MEM0_AGENT_ID": "agent_id",
@@ -192,6 +328,38 @@ def load_config(config_path: Optional[str] = None) -> dict:
             else:
                 config[config_key] = env_value
 
+    # Hostname-verification toggle (configuration-file only; safe default true).
+    config["tls_verify_hostname"] = _parse_bool_option(
+        config.get("tls_verify_hostname"), True
+    )
+
+    # Resolve the HTTP endpoint (scheme-less values default to http://).
+    # An empty/whitespace/None value means the endpoint is not configured.
+    http_host = config.get("mem0_host")
+    config["mem0_host"] = (
+        _normalize_base_url(http_host, "http") if _is_configured(http_host) else None
+    )
+
+    # Resolve the optional HTTPS endpoint and validate its CA certificate.
+    https_host = config.get("mem0_host_https")
+    if _is_configured(https_host):
+        config["mem0_host_https"] = _normalize_base_url(https_host, "https")
+        cert_path = config.get("cert_path")
+        if not _is_configured(cert_path):
+            raise ValueError(
+                "cert_path is required when mem0_host_https is configured "
+                "(path to the CA certificate/bundle used to verify the hub's "
+                "HTTPS certificate)"
+            )
+        if not os.path.isfile(cert_path) or not os.access(cert_path, os.R_OK):
+            raise ValueError(
+                f"cert_path '{cert_path}' does not exist or is not readable"
+            )
+        config["cert_path"] = cert_path
+    else:
+        config["mem0_host_https"] = None
+        config["cert_path"] = None
+
     return config
 
 
@@ -200,7 +368,10 @@ async def create_mcp_server(config: dict) -> MCPServer:
     mcp = MCPServer(name="mem0-mcp", version="1.0.0")
 
     mem0_client = Mem0Client(
-        host=config["mem0_host"],
+        host=config.get("mem0_host"),
+        https_host=config.get("mem0_host_https"),
+        cert_path=config.get("cert_path"),
+        tls_verify_hostname=config.get("tls_verify_hostname", True),
         api_key=config["api_key"],
         user_id=config["user_id"],
         agent_id=config.get("agent_id"),
@@ -367,7 +538,20 @@ def main():
     config = load_config(args.config)
 
     logger.info(f"Mem0 MCP Server starting...")
-    logger.info(f"Mem0 host: {config['mem0_host']}")
+    if config.get("mem0_host"):
+        logger.info(f"Mem0 HTTP host: {config['mem0_host']}")
+    else:
+        logger.info("Mem0 HTTP host: not configured")
+    if config.get("mem0_host_https"):
+        logger.info(
+            f"Mem0 HTTPS host (fallback): {config['mem0_host_https']} "
+            f"(CA: {config.get('cert_path')})"
+        )
+    if not config.get("mem0_host") and not config.get("mem0_host_https"):
+        logger.warning(
+            "No mem0 endpoint configured; hub operations will fail until "
+            "mem0_host or mem0_host_https is set"
+        )
     logger.info(f"User ID: {config['user_id']}")
     logger.info(f"Agent ID: {config.get('agent_id', 'N/A')}")
 

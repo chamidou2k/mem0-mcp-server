@@ -41,6 +41,11 @@ fi
 
 source "$SCRIPT_DIR/.venv/bin/activate"
 
+# Install/refresh dependencies into the virtual environment. Redirect stdout to
+# stderr so pip output never corrupts the MCP stdio protocol on stdout.
+python3 -m pip install --quiet --disable-pip-version-check \
+    -r "$SCRIPT_DIR/requirements.txt" 1>&2
+
 if [ "$USE_ENV" = true ]; then
     python3 "$SCRIPT_DIR/mem0_mcp_server.py" --transport "$TRANSPORT" --port "$PORT" --env
 else

@@ -1,5 +1,8 @@
 {
-  "mem0_host": "http://<mem0-host>:<port>",
+  "mem0_host": "",
+  "mem0_host_https": "",
+  "cert_path": "",
+  "tls_verify_hostname": true,
   "api_key": "<api_key>",
   "user_id": "<user_id>",
   "agent_id": "<agent_id>",
