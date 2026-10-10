@@ -5,25 +5,45 @@ server named `mem0`, giving OpenCode persistent memory backed by your mem0 hub.
 
 ## Install
 
+Install the plugin straight from the project repository (it lives in the
+`integrations/opencode` subdirectory):
+
 ```bash
-opencode plugin add opencode-mem0-mcp
+opencode plugin add 'github:chamidou2k/mem0-mcp-server#main::path:integrations/opencode'
 ```
 
-The plugin registers a local stdio MCP server named `mem0` that runs the
-installed `mem0-mcp-server` command.
+Or list it in the `plugins` array of `opencode.json`:
+
+```json
+{
+  "plugins": [
+    "github:chamidou2k/mem0-mcp-server#main::path:integrations/opencode"
+  ]
+}
+```
+
+A single install is enough: by default the plugin launches the server with
+`uvx --from git+https://github.com/chamidou2k/mem0-mcp-server mem0-mcp-server`,
+which downloads and runs the companion Python server on demand.
 
 ## Prerequisite
 
-The plugin launches the `mem0-mcp-server` command, so install the server first:
+The default launch command uses [`uv`](https://docs.astral.sh/uv/), so install
+it first if you do not have it:
 
 ```bash
-pip install mem0-mcp-server
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-Or install it from the repository:
+If you prefer not to use `uv`, install the server yourself and point the plugin
+at it with the `serverCommand` option:
 
 ```bash
 pip install "git+https://github.com/chamidou2k/mem0-mcp-server"
+```
+
+```json
+{ "serverCommand": "mem0-mcp-server" }
 ```
 
 ## Configure
@@ -82,6 +102,7 @@ environment variable and, when that is also unset, to the server's own default.
 | `searchThreshold` | `MEM0_SEARCH_THRESHOLD` | Similarity threshold (0.0-1.0) |
 | `maxMemories` | `MEM0_MAX_MEMORIES` | Max results for list/search |
 | `infer` | `MEM0_INFER` | Enable semantic fact extraction |
+| `serverCommand` | *(none)* | Override the server launch command (a string or an array of strings); defaults to `uvx --from git+https://github.com/chamidou2k/mem0-mcp-server mem0-mcp-server` |
 
 ## How it works
 
@@ -93,7 +114,11 @@ the MCP editor and reads options from `ctx.options`:
 await ctx.mcp.transform((editor) => {
   editor.set("mem0", {
     type: "local",
-    command: ["mem0-mcp-server"],
+    command: [
+      "uvx", "--from",
+      "git+https://github.com/chamidou2k/mem0-mcp-server",
+      "mem0-mcp-server",
+    ],
     environment: { /* the MEM0_* variables above */ },
     disabled: false,
   });
@@ -106,7 +131,11 @@ configuration hook:
 ```jsonc
 config.mcp["mem0"] = {
   "type": "local",
-  "command": ["mem0-mcp-server"],
+  "command": [
+    "uvx", "--from",
+    "git+https://github.com/chamidou2k/mem0-mcp-server",
+    "mem0-mcp-server"
+  ],
   "environment": { /* the MEM0_* variables above */ },
   "enabled": true
 }

@@ -4,7 +4,9 @@ __pycache__/
 *.pyo
 .venv/
 *.egg-info/
-dist/
+/dist/
+# The `/dist/` ignore above is repo-root only. `integrations/opencode/dist` is
+# tracked on purpose: OpenCode installs the plugin from Git without a build step.
 build/
 
 # Node

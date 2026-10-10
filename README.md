@@ -144,6 +144,18 @@ docker-compose down
 
 Integrations that register this server with specific MCP clients live under `integrations/`.
 
+### OpenCode
+
+The OpenCode adapter installs straight from this repository and pulls the
+server on demand:
+
+```bash
+opencode plugin add 'github:chamidou2k/mem0-mcp-server#main::path:integrations/opencode'
+```
+
+See [`integrations/opencode/README.md`](integrations/opencode/README.md) for the
+prerequisite and options.
+
 ## License
 
 MIT

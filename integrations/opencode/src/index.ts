@@ -24,8 +24,46 @@ const OPTION_ENV_MAP: Record<string, string> = {
 /** Name under which the mem0 server is registered with OpenCode. */
 const MCP_SERVER_NAME = "mem0";
 
-/** Console script installed by the `mem0-mcp-server` Python package. */
-const SERVER_COMMAND = "mem0-mcp-server";
+/** Repository the default launch command installs the server from. */
+const SERVER_REPOSITORY = "git+https://github.com/chamidou2k/mem0-mcp-server";
+
+/**
+ * Default launch command. `uvx` installs and runs the server straight from the
+ * project repository, so installing only this plugin also provides the server.
+ */
+const DEFAULT_SERVER_COMMAND = [
+  "uvx",
+  "--from",
+  SERVER_REPOSITORY,
+  "mem0-mcp-server",
+];
+
+/** Plugin option that overrides the default launch command. */
+const SERVER_COMMAND_OPTION = "serverCommand";
+
+/** Normalize a string or string-array command option to a command array. */
+function toCommand(value: unknown): string[] | undefined {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed === "" ? undefined : [trimmed];
+  }
+  if (Array.isArray(value)) {
+    const parts = value.filter(
+      (part): part is string => typeof part === "string" && part.trim() !== "",
+    );
+    return parts.length > 0 ? parts : undefined;
+  }
+  return undefined;
+}
+
+/**
+ * Resolve the server launch command: the `serverCommand` option when supplied,
+ * otherwise the default `uvx` command that installs the server from the
+ * project repository.
+ */
+function resolveServerCommand(options?: PluginOptions): string[] {
+  return toCommand(options?.[SERVER_COMMAND_OPTION]) ?? DEFAULT_SERVER_COMMAND;
+}
 
 /** Stable plugin id shared by the V1 and V2 entry points. */
 const PLUGIN_ID = "opencode-mem0-mcp";
@@ -75,7 +113,7 @@ const v2Plugin = Plugin.define({
     await context.mcp.transform((editor) => {
       editor.set(MCP_SERVER_NAME, {
         type: "local",
-        command: [SERVER_COMMAND],
+        command: resolveServerCommand(context.options),
         environment: buildEnvironment(context.options),
         disabled: false,
       });
@@ -105,7 +143,7 @@ const server = async (
     config.mcp ??= {};
     config.mcp[MCP_SERVER_NAME] = {
       type: "local",
-      command: [SERVER_COMMAND],
+      command: resolveServerCommand(options),
       environment: buildEnvironment(options),
       enabled: true,
     };
