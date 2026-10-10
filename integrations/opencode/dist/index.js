@@ -1,4 +1,3 @@
-import { Plugin } from "@opencode/plugin";
 /**
  * Maps each supported plugin option to the environment variable the
  * `mem0-mcp-server` process reads. The server treats unset variables as
@@ -89,11 +88,15 @@ function buildEnvironment(options) {
 }
 /**
  * OpenCode V2 entry point. OpenCode loads a plugin that default-exports a
- * `Plugin.define({ id, setup })` module and calls `setup` once at boot. The
- * MCP server is registered through the MCP editor so the entry lands wherever
- * the running OpenCode stores local servers (`mcp.servers`).
+ * module with an `id` and a `setup(context)` function, and calls `setup` once
+ * at boot. The MCP server is registered through the MCP editor so the entry
+ * lands wherever the running OpenCode stores local servers (`mcp.servers`).
+ *
+ * This is defined as a plain object rather than via OpenCode's `Plugin.define`
+ * helper (which is the identity function) so the compiled module imports
+ * nothing at runtime.
  */
-const v2Plugin = Plugin.define({
+const v2Plugin = {
     id: PLUGIN_ID,
     async setup(context) {
         await context.mcp.transform((editor) => {
@@ -105,7 +108,7 @@ const v2Plugin = Plugin.define({
             });
         });
     },
-});
+};
 /**
  * OpenCode V1 entry point. V1 loads a default export shaped like
  * `{ id, server }` and calls `server` to obtain hooks; the `config` hook

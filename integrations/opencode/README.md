@@ -106,9 +106,10 @@ environment variable and, when that is also unset, to the server's own default.
 
 ## How it works
 
-The default export supports both plugin APIs. On OpenCode V2 the plugin is
-loaded with `Plugin.define({ id, setup })`; `setup` registers the server through
-the MCP editor and reads options from `ctx.options`:
+The default export supports both plugin APIs and imports nothing at runtime, so
+it loads from wherever OpenCode installs it. On OpenCode V2 the module exports
+an `id` and a `setup`; `setup` registers the server through the MCP editor and
+reads options from `ctx.options`:
 
 ```ts
 await ctx.mcp.transform((editor) => {

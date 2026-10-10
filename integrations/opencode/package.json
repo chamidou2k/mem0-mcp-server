@@ -21,17 +21,5 @@
     "mem0",
     "mcp"
   ],
-  "license": "MIT",
-  "peerDependencies": {
-    "@opencode-ai/plugin": ">=1.18.29",
-    "@opencode/plugin": ">=2.0.0"
-  },
-  "peerDependenciesMeta": {
-    "@opencode-ai/plugin": {
-      "optional": true
-    },
-    "@opencode/plugin": {
-      "optional": true
-    }
-  }
+  "license": "MIT"
 }

@@ -1,5 +1,37 @@
-import { Plugin } from "@opencode/plugin";
-import type { PluginOptions } from "@opencode/plugin";
+/**
+ * Plugin options supplied by OpenCode's object-form plugin entry. Declared
+ * locally, along with the structural views below, so the compiled module has
+ * no runtime imports and therefore loads from wherever the installer places
+ * it (a Git-installed plugin cannot resolve OpenCode's own packages).
+ */
+type PluginOptions = Readonly<Record<string, unknown>>;
+
+/** Minimal structural view of the OpenCode V2 MCP editor. */
+interface McpEditor {
+  set(
+    name: string,
+    server: {
+      type: "local";
+      command: string[];
+      environment: Record<string, string>;
+      disabled: boolean;
+    },
+  ): void;
+}
+
+/** Minimal structural view of the OpenCode V2 plugin setup context. */
+interface PluginContext {
+  readonly options?: PluginOptions;
+  readonly mcp: {
+    transform(edit: (editor: McpEditor) => void): Promise<void>;
+  };
+}
+
+/** Minimal structural view of an OpenCode V2 plugin module. */
+interface PluginModule {
+  readonly id: string;
+  readonly setup: (context: PluginContext) => Promise<void>;
+}
 
 /**
  * Maps each supported plugin option to the environment variable the
@@ -103,11 +135,15 @@ function buildEnvironment(options?: PluginOptions): Record<string, string> {
 
 /**
  * OpenCode V2 entry point. OpenCode loads a plugin that default-exports a
- * `Plugin.define({ id, setup })` module and calls `setup` once at boot. The
- * MCP server is registered through the MCP editor so the entry lands wherever
- * the running OpenCode stores local servers (`mcp.servers`).
+ * module with an `id` and a `setup(context)` function, and calls `setup` once
+ * at boot. The MCP server is registered through the MCP editor so the entry
+ * lands wherever the running OpenCode stores local servers (`mcp.servers`).
+ *
+ * This is defined as a plain object rather than via OpenCode's `Plugin.define`
+ * helper (which is the identity function) so the compiled module imports
+ * nothing at runtime.
  */
-const v2Plugin = Plugin.define({
+const v2Plugin: PluginModule = {
   id: PLUGIN_ID,
   async setup(context) {
     await context.mcp.transform((editor) => {
@@ -119,7 +155,7 @@ const v2Plugin = Plugin.define({
       });
     });
   },
-});
+};
 
 /** Minimal structural types for the OpenCode V1 plugin API. */
 interface V1Config {
