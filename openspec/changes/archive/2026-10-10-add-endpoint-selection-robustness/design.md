@@ -2,7 +2,7 @@
 
 ## Context
 
-`mem0_mcp_server.py` is a single-file FastMCP server. Its `Mem0Client` currently holds a required HTTP `httpx.AsyncClient` built from `mem0_host` and an optional HTTPS client built from `mem0_host_https` with `verify=cert_path`; `_select_client()` probes HTTP and falls back to HTTPS. `DEFAULT_CONFIG` hardcodes `mem0_host` = `http://192.168.1.100:8001`, and `load_config()` always normalizes `mem0_host`. Endpoint-selection requirements live in `openspec/specs/hub-connection/spec.md`; motivation is in proposal.md.
+`mem0_mcp_server.py` is a single-file FastMCP server. Its `Mem0Client` currently holds a required HTTP `httpx.AsyncClient` built from `mem0_host` and an optional HTTPS client built from `mem0_host_https` with `verify=cert_path`; `_select_client()` probes HTTP and falls back to HTTPS. `DEFAULT_CONFIG` hardcodes `mem0_host` = `http://<hub>:8001`, and `load_config()` always normalizes `mem0_host`. Endpoint-selection requirements live in `openspec/specs/hub-connection/spec.md`; motivation is in proposal.md.
 
 ## Goals / Non-Goals
 

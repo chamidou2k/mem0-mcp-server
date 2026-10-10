@@ -27,16 +27,16 @@ def clean_env(monkeypatch):
 
 def test_legacy_config_http_only(tmp_path):
     config = server.load_config(
-        write_config(tmp_path, {"mem0_host": "http://192.168.1.100:8001"})
+        write_config(tmp_path, {"mem0_host": "http://hub:8001"})
     )
-    assert config["mem0_host"] == "http://192.168.1.100:8001"
+    assert config["mem0_host"] == "http://hub:8001"
     assert config["mem0_host_https"] is None
     assert config["cert_path"] is None
 
 
 def test_scheme_less_host_defaults_to_http(tmp_path):
-    config = server.load_config(write_config(tmp_path, {"mem0_host": "192.168.1.100:8001"}))
-    assert config["mem0_host"] == "http://192.168.1.100:8001"
+    config = server.load_config(write_config(tmp_path, {"mem0_host": "hub:8001"}))
+    assert config["mem0_host"] == "http://hub:8001"
 
 
 def test_no_http_host_has_no_builtin_default(tmp_path):

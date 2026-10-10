@@ -29,7 +29,7 @@ Because the same dict is passed to both clients, adding it once covers HTTP and 
 `Content-Type`, `X-Mem0-Source`, and `X-Mem0-Client` are untouched.
 
 **4. The literal `none` (and empty) means "no key".**
-This preserves backward compatibility with hubs that do not require auth (for example the HTTP endpoint on `:8001`).
+This preserves backward compatibility with hubs that do not require auth (for example the HTTP endpoint .).
 
 **5. Document the cleartext-transport caveat.**
 Sending a key over plain HTTP exposes it on the wire; README recommends HTTPS (with certificate verification) when a key is configured. Documentation only — no code enforcement, since the operator may have a trusted/protected network.

@@ -51,7 +51,7 @@ DEFAULT_CONFIG = {
     # only; never disables TLS verification entirely.
     "tls_verify_hostname": True,
     "api_key": "none",
-    "user_id": "ssc",
+    "user_id": "default",
     "agent_id": "opencode",
     "channel": "",
     "search_threshold": 0.1,
@@ -106,7 +106,7 @@ class Mem0Client:
         self,
         host: Optional[str] = None,
         api_key: str = "none",
-        user_id: str = "ssc",
+        user_id: str = "default",
         agent_id: str = "opencode",
         channel: str = "",
         search_threshold: float = 0.1,

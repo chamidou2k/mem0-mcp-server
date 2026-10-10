@@ -17,7 +17,7 @@
 
 ## 4. Integration checks
 
-- [x] 4.1 Real-hub smoke test: HTTPS-only config targeting `https://192.168.1.100:8443` with `cert_path` pointing at the hub's self-signed certificate — confirm `get_status` fails with the default `tls_verify_hostname` and succeeds with `tls_verify_hostname: false`. Verify both runs behave as expected.
+- [x] 4.1 Real-hub smoke test: HTTPS-only config targeting `https://<hub>:8443` with `cert_path` pointing at the hub's self-signed certificate — confirm `get_status` fails with the default `tls_verify_hostname` and succeeds with `tls_verify_hostname: false`. Verify both runs behave as expected.
 - [x] 4.2 Run the full suite (`python3 -m pytest tests/ -q`) and `openspec validate "add-tls-hostname-verify-option"`; both must pass before archive.
 
 ## Workflow follow-up

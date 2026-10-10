@@ -11,7 +11,7 @@
 
 ## 3. Integration checks
 
-- [x] 3.1 Real-hub smoke test: HTTPS config to `https://192.168.1.100:8443` with `cert_path` and a real `api_key` — confirm add/search/list/get/delete all succeed (no 401). Verify the observed behavior.
+- [x] 3.1 Real-hub smoke test: HTTPS config to `https://<hub>:8443` with `cert_path` and a real `api_key` — confirm add/search/list/get/delete all succeed (no 401). Verify the observed behavior.
 - [x] 3.2 Run the full suite (`python3 -m pytest tests/ -q`) and `openspec validate "send-api-key-header"`; both must pass.
 
 ## Workflow follow-up

@@ -39,11 +39,11 @@ The end-to-end path from a bare machine to `mem0 connected`:
        {
          "package": "github:chamidou2k/mem0-mcp-server#main::path:integrations/opencode",
          "options": {
-           "mem0Host": "http://192.168.1.100:8001",
-           "mem0HostHttps": "https://192.168.1.100:8443",
+           "mem0Host": "http://<mem0-host>:8001",
+           "mem0HostHttps": "https://<mem0-host>:8443",
            "certPath": "/path/to/ca-certificate.pem",
            "tlsVerifyHostname": false,
-           "apiKey": "change-me",
+           "apiKey": "<api-key>",
            "serverCommand": ["/home/you/.local/bin/mem0-mcp-server"]
          }
        }
@@ -128,11 +128,11 @@ reads the `plugins` array; pass the options through the object form:
     {
       "package": "github:chamidou2k/mem0-mcp-server#main::path:integrations/opencode",
       "options": {
-        "mem0Host": "http://192.168.1.100:8001",
-        "mem0HostHttps": "https://192.168.1.100:8443",
+        "mem0Host": "http://<mem0-host>:8001",
+        "mem0HostHttps": "https://<mem0-host>:8443",
         "certPath": "/path/to/ca-certificate.pem",
         "tlsVerifyHostname": false,
-        "apiKey": "change-me",
+        "apiKey": "<api-key>",
         "userId": "opencode",
         "agentId": "opencode",
         "channel": "",
@@ -150,7 +150,7 @@ OpenCode V1 reads the `plugin` array with a `[package, options]` tuple:
 ```json
 {
   "plugin": [
-    ["opencode-mem0-mcp", { "mem0Host": "http://192.168.1.100:8001", "apiKey": "change-me" }]
+    ["opencode-mem0-mcp", { "mem0Host": "http://<mem0-host>:8001", "apiKey": "<api-key>" }]
   ]
 }
 ```

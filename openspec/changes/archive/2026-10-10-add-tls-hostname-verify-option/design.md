@@ -2,7 +2,7 @@
 
 ## Context
 
-`mem0_mcp_server.py` builds the HTTPS `httpx.AsyncClient` with `verify=cert_path`, which performs full verification including a hostname/IP match. The hub's certificate is self-signed (`CN=localhost`, no SAN), so connecting to `https://192.168.1.100:8443` fails hostname verification even though the CA is trusted. Requirements live in `specs/hub-connection/spec.md` (delta in this change); motivation is in proposal.md. The current main spec forbids falling back to unverified TLS, so the relaxation must be explicit and keep chain verification.
+`mem0_mcp_server.py` builds the HTTPS `httpx.AsyncClient` with `verify=cert_path`, which performs full verification including a hostname/IP match. The hub's certificate is self-signed (`CN=localhost`, no SAN), so connecting to `https://<hub>:8443` fails hostname verification even though the CA is trusted. Requirements live in `specs/hub-connection/spec.md` (delta in this change); motivation is in proposal.md. The current main spec forbids falling back to unverified TLS, so the relaxation must be explicit and keep chain verification.
 
 ## Goals / Non-Goals
 

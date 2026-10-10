@@ -2,7 +2,7 @@
 
 ## Context
 
-`mem0_mcp_server.py` is a single-file FastMCP server whose `Mem0Client` wraps an `httpx.AsyncClient` with `base_url` taken verbatim from the `mem0_host` config value (typically embedding a scheme, e.g. `http://192.168.1.100:8001`). Config comes from `DEFAULT_CONFIG` → JSON file (`load_config`) → `MEM0_*` env overrides. Motivation is in proposal.md; requirements live in `specs/hub-connection/spec.md` (delta in this change). The hub now exposes both an HTTP and an HTTPS endpoint, and the server must prefer HTTP and fall back to HTTPS per operation.
+`mem0_mcp_server.py` is a single-file FastMCP server whose `Mem0Client` wraps an `httpx.AsyncClient` with `base_url` taken verbatim from the `mem0_host` config value (typically embedding a scheme, e.g. `http://<hub>:8001`). Config comes from `DEFAULT_CONFIG` → JSON file (`load_config`) → `MEM0_*` env overrides. Motivation is in proposal.md; requirements live in `specs/hub-connection/spec.md` (delta in this change). The hub now exposes both an HTTP and an HTTPS endpoint, and the server must prefer HTTP and fall back to HTTPS per operation.
 
 ## Goals / Non-Goals
 

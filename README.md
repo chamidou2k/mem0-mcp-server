@@ -76,7 +76,7 @@ The endpoint you configure determines how the server connects:
 
 An empty or null value means "not configured". `mem0_host` has no built-in default, so set `mem0_host`, `mem0_host_https`, or both.
 
-**HTTPS certificate verification:** by default the hub's certificate is verified against `cert_path`, including a match of the host/IP you connect to. If the hub uses a self-signed certificate whose name does not match its address (for example `CN=localhost` while connecting to `192.168.1.100`), set `"tls_verify_hostname": false` to keep verifying the certificate chain against `cert_path` while skipping only the hostname/IP match — chain verification is never disabled. This weakens protection against a mismatched or spoofed certificate, so the safer alternative is to add the hub's IP/hostname as a SAN to its certificate and leave the option at `true`.
+**HTTPS certificate verification:** by default the hub's certificate is verified against `cert_path`, including a match of the host/IP you connect to. If the hub uses a self-signed certificate whose name does not match its address (for example `CN=localhost` while connecting to the hub's address), set `"tls_verify_hostname": false` to keep verifying the certificate chain against `cert_path` while skipping only the hostname/IP match — chain verification is never disabled. This weakens protection against a mismatched or spoofed certificate, so the safer alternative is to add the hub's IP/hostname as a SAN to its certificate and leave the option at `true`.
 
 **API key:** when `api_key` is configured (a non-empty value other than `none`), the server sends it as an `X-API-Key` header on every hub request, for both the HTTP and HTTPS endpoints. `none` or an empty value sends no key header, which keeps hubs that do not require authentication working. Because the key is sent in cleartext over plain HTTP, use the HTTPS endpoint when the hub requires a key.
 
@@ -168,8 +168,8 @@ the object form (replace the bare string entry that `opencode plugin add` wrote)
     {
       "package": "github:chamidou2k/mem0-mcp-server#main::path:integrations/opencode",
       "options": {
-        "mem0Host": "http://192.168.1.100:8001",
-        "apiKey": "change-me",
+        "mem0Host": "http://<mem0-host>:8001",
+        "apiKey": "<api-key>",
         "serverCommand": ["/home/you/.local/bin/mem0-mcp-server"]
       }
     }

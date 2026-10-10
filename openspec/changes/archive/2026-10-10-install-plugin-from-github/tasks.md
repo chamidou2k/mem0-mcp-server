@@ -16,7 +16,7 @@
 ## 4. Verification
 
 - [x] 4.1 Build the adapter (`npm run build`), run the Node smoke test (asserting the default uvx command and the `serverCommand` override), run `python3 -m pytest tests/ -q`, and run `openspec validate "install-plugin-from-github"`.
-- [x] 4.2 Install `uv` if absent and run the default command locally (`uvx --from /home/ssc/projects/mem0-mcp-server mem0-mcp-server --version`) to prove `uvx` launches the server; confirm it reports the version.
+- [x] 4.2 Install `uv` if absent and run the default command locally (`uvx --from <repo-path> mem0-mcp-server --version`) to prove `uvx` launches the server; confirm it reports the version.
 
 ## Workflow follow-up
 

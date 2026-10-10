@@ -12,7 +12,7 @@ The hub can be reached over HTTP and/or HTTPS, but the current server always tre
   - HTTPS configured only → use HTTPS (no probing).
   - Both configured → check HTTP per operation, prefer HTTP, fall back to HTTPS when HTTP is unavailable.
   - Neither configured → the server still starts; each hub operation fails with a clear "no endpoint configured" error.
-- **BREAKING**: remove the built-in `mem0_host` default (`http://192.168.1.100:8001`). Operators must configure at least one of `mem0_host` or `mem0_host_https`; a deployment that previously relied on the implicit default now fails per request until an endpoint is set.
+- **BREAKING**: remove the built-in `mem0_host` default (`http://<hub>:8001`). Operators must configure at least one of `mem0_host` or `mem0_host_https`; a deployment that previously relied on the implicit default now fails per request until an endpoint is set.
 - Update `config.template.json` and README to document that leaving `mem0_host` empty while setting `mem0_host_https` (and `cert_path`) enables HTTPS-only access.
 - No change to MCP tools, resources, transports, or the mem0 REST API surface.
 

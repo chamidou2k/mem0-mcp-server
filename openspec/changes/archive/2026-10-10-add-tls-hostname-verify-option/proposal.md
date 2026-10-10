@@ -2,7 +2,7 @@
 
 ## Why
 
-Internal/self-signed hub certificates — for example `CN=localhost` with no SAN — are rejected by hostname/IP verification even when the operator explicitly trusts the CA. As a result the HTTPS fallback endpoint cannot be used against the hub's configured address (`192.168.1.100`), even though the certificate is otherwise trusted. Operators need an explicit, opt-in way to keep certificate-chain verification while skipping only the hostname match.
+Internal/self-signed hub certificates — for example `CN=localhost` with no SAN — are rejected by hostname/IP verification even when the operator explicitly trusts the CA. As a result the HTTPS fallback endpoint cannot be used against the hub's configured address (`its IP`), even though the certificate is otherwise trusted. Operators need an explicit, opt-in way to keep certificate-chain verification while skipping only the hostname match.
 
 ## What Changes
 
