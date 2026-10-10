@@ -17,7 +17,7 @@
 
 ## 4. Verify the Git install
 
-- [ ] 4.1 Commit and push the repository, then run `opencode plugin add 'github:chamidou2k/mem0-mcp-server#main::path:integrations/opencode'` (with OpenCode and npm caches cleared) and confirm it succeeds and caches the adapter subdirectory (`node_modules/opencode-mem0-mcp` under the OpenCode npm cache).
+- [x] 4.1 Commit and push the repository, then run `opencode plugin add 'github:chamidou2k/mem0-mcp-server#main::path:integrations/opencode'` (with OpenCode and npm caches cleared) and confirm it succeeds and caches the adapter subdirectory (`node_modules/opencode-mem0-mcp` under the OpenCode npm cache).
 
 ## Workflow follow-up
 
