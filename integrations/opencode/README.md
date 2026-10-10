@@ -3,6 +3,77 @@
 An OpenCode plugin that registers the [Mem0 MCP Server](../../) as a local MCP
 server named `mem0`, giving OpenCode persistent memory backed by your mem0 hub.
 
+## Setup
+
+The end-to-end path from a bare machine to `mem0 connected`:
+
+1. **Install `uv`** (the default launch command uses it) - see
+   [Prerequisite](#prerequisite):
+
+   ```bash
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   ```
+
+2. **Pre-install the server (recommended).** Installing the server once as a uv
+   tool makes every start fast and lock-free, which avoids the MCP connect
+   timeout that a cold `uvx` cache can cause - see [Startup latency](#startup-latency):
+
+   ```bash
+   uv tool install --force --from git+https://github.com/chamidou2k/mem0-mcp-server mem0-mcp-server
+   ```
+
+3. **Add the plugin**, straight from this repository:
+
+   ```bash
+   opencode plugin add 'github:chamidou2k/mem0-mcp-server#main::path:integrations/opencode'
+   ```
+
+4. **Configure the hub options.** `opencode plugin add` writes a bare string
+   entry; edit `~/.config/opencode/opencode.json` and replace it with the object
+   form so the options reach the server (the full list is under
+   [Configure](#configure) and [Options](#options)):
+
+   ```json
+   {
+     "plugins": [
+       {
+         "package": "github:chamidou2k/mem0-mcp-server#main::path:integrations/opencode",
+         "options": {
+           "mem0Host": "http://192.168.1.100:8001",
+           "mem0HostHttps": "https://192.168.1.100:8443",
+           "certPath": "/path/to/ca-certificate.pem",
+           "tlsVerifyHostname": false,
+           "apiKey": "change-me",
+           "serverCommand": ["/home/you/.local/bin/mem0-mcp-server"]
+         }
+       }
+     ]
+   }
+   ```
+
+   `serverCommand` is optional; drop it to let the plugin run the server through
+   `uvx` instead of the pre-installed binary.
+
+5. **Restart OpenCode** so it reloads the configuration:
+
+   ```bash
+   opencode service restart
+   ```
+
+6. **Verify** the server connected:
+
+   ```bash
+   opencode mcp list
+   ```
+
+   Expect `✓ mem0 connected`. `○ mem0 pending` means it is still starting;
+   `✗ mem0 failed: ...` means it exited or timed out.
+
+If your environment defines a proxy and the hub is on a host the proxy cannot
+route (such as a machine on your local network), list that host in `NO_PROXY`
+(or `no_proxy`) so the server contacts it directly - see the **Proxy
+environment** note in the [server README](../../README.md).
+
 ## Install
 
 Install the plugin straight from the project repository (it lives in the

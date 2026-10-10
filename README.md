@@ -82,6 +82,8 @@ An empty or null value means "not configured". `mem0_host` has no built-in defau
 
 Or use environment variables (`MEM0_HOST`, `MEM0_HOST_HTTPS`, `MEM0_CERT_PATH`, `MEM0_TLS_VERIFY_HOSTNAME`, `MEM0_USER_ID`, `MEM0_AGENT_ID`, `MEM0_API_KEY`, `MEM0_CHANNEL`, `MEM0_SEARCH_THRESHOLD`, `MEM0_MAX_MEMORIES`, `MEM0_INFER`). Every option can be set from the environment; an environment variable takes precedence over the same key in the configuration file, and an unset variable leaves the file value (or the default) in place. `MEM0_TLS_VERIFY_HOSTNAME` accepts `true`/`false` (case-insensitive).
 
+**Proxy environment:** the server honours the standard proxy environment variables (`HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, and their lowercase forms), including SOCKS proxies — SOCKS support ships with the package, so a proxy in the environment no longer prevents startup. To reach a hub a proxy cannot route, such as a host on your local network, list it in `NO_PROXY` (or `no_proxy`); requests to those hosts are sent directly.
+
 ### 3. Run
 
 ```bash
@@ -147,14 +149,43 @@ Integrations that register this server with specific MCP clients live under `int
 ### OpenCode
 
 The OpenCode adapter installs straight from this repository and pulls the
-server on demand:
+server on demand. From a shell:
 
 ```bash
+# 1. (once) install the server so starts stay fast and lock-free
+uv tool install --force --from git+https://github.com/chamidou2k/mem0-mcp-server mem0-mcp-server
+
+# 2. add the plugin
 opencode plugin add 'github:chamidou2k/mem0-mcp-server#main::path:integrations/opencode'
 ```
 
+Then edit `~/.config/opencode/opencode.json` to pass your hub options through
+the object form (replace the bare string entry that `opencode plugin add` wrote):
+
+```json
+{
+  "plugins": [
+    {
+      "package": "github:chamidou2k/mem0-mcp-server#main::path:integrations/opencode",
+      "options": {
+        "mem0Host": "http://192.168.1.100:8001",
+        "apiKey": "change-me",
+        "serverCommand": ["/home/you/.local/bin/mem0-mcp-server"]
+      }
+    }
+  ]
+}
+```
+
+Reload the configuration and verify the connection:
+
+```bash
+opencode service restart
+opencode mcp list   # expect: ✓ mem0 connected
+```
+
 See [`integrations/opencode/README.md`](integrations/opencode/README.md) for the
-prerequisite and options.
+full setup walkthrough, every option, and troubleshooting.
 
 ## License
 
