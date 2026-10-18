@@ -41,6 +41,47 @@ chmod +x start.sh
 ./start.sh
 ```
 
+### AI agent host installation
+
+Register the mem0 server as an MCP server with a supported AI agent host so it
+is available in that host. The server itself installs from the project Git
+repository with a single specifier and without a build step.
+
+**OpenCode**
+
+```bash
+# 1. (once) install the server so starts stay fast and lock-free
+uv tool install --force --from git+https://github.com/chamidou2k/mem0-mcp-server mem0-mcp-server
+
+# 2. add the OpenCode plugin, straight from this repository
+opencode plugin add 'github:chamidou2k/mem0-mcp-server#main::path:integrations/opencode'
+```
+
+Then edit `~/.config/opencode/opencode.json` to pass your hub options through
+the object form (see [`integrations/opencode/README.md`](integrations/opencode/README.md)
+for the full option list), restart OpenCode (`opencode service restart`), and
+verify with `opencode mcp list` (expect `✓ mem0 connected`).
+
+**pi**
+
+```bash
+# 1. install the pi extension straight from this repository
+pi install git:github.com/chamidou2k/mem0-mcp-server
+
+# 2. register the mem0 MCP server with pi
+pi mcp add mem0 -- uvx --from git+https://github.com/chamidou2k/mem0-mcp-server mem0-mcp-server
+```
+
+Or point pi at a pre-installed `mem0-mcp-server` binary:
+
+```bash
+pi mcp add mem0 -- /home/you/.local/bin/mem0-mcp-server
+```
+
+Hub connection options (`mem0_host`, `api_key`, `cert_path`, …) are forwarded
+as `MEM0_*` environment variables. Verify with `pi mcp list` (expect `mem0`
+listed). See [`integrations/pi/README.md`](integrations/pi/README.md).
+
 ### 2. Configure
 
 Copy `config.template.json` to `config.json` and update the values:

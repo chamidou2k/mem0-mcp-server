@@ -1,0 +1,28 @@
+{
+  "name": "pi-mem0-mcp",
+  "version": "0.1.0",
+  "description": "pi extension that registers the mem0 MCP server for persistent memory operations",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "pi",
+    "extension",
+    "mem0",
+    "mcp"
+  ],
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {},
+  "scripts": {}
+}
