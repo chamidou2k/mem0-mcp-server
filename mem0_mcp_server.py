@@ -226,8 +226,6 @@ class Mem0Client:
             "query": query,
             "user_id": self.user_id,
         }
-        if self.agent_id:
-            payload["agent_id"] = self.agent_id
 
         client = await self._select_client()
         response = await client.post("/search", json=payload)
@@ -237,8 +235,6 @@ class Mem0Client:
     async def list_memories(self, page: int = 1, page_size: int = 50) -> dict:
         """List all memories for the user."""
         params = {"user_id": self.user_id}
-        if self.agent_id:
-            params["agent_id"] = self.agent_id
         params["top_k"] = min(page_size, self.max_memories)
 
         client = await self._select_client()
@@ -253,7 +249,6 @@ class Mem0Client:
             "/memories",
             params={
                 "user_id": self.user_id,
-                "agent_id": self.agent_id,
                 "top_k": self.max_memories,
             },
         )
@@ -278,6 +273,8 @@ class Mem0Client:
         payload = {"text": content}
         if metadata:
             payload["metadata"] = metadata
+        if self.agent_id:
+            payload["agent_id"] = self.agent_id
         client = await self._select_client()
         response = await client.put(f"/memories/{memory_id}", json=payload)
         response.raise_for_status()
